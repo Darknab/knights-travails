@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'pry-byebug'
 
 class Node
@@ -8,16 +10,16 @@ class Node
     @children = Array.new(8)
     @parent = nil
   end
-
 end
 
 class Tree
   attr_accessor :node
+
   board = []
-  for i in 1..8 do
-    for j in 1..8 do
+  (1..8).each do |i|
+    (1..8).each do |j|
       board << [i, j]
-    end 
+    end
   end
 
   @@free = board
@@ -26,12 +28,13 @@ class Tree
     @node = node
   end
 
-  #position is node.root
+  # position is node.root
   def calculate_moves(position)
     arr = []
-    for i in -2..2 do
-      for j in -2..2 do
-        next if i.abs == j.abs || i == 0 || j == 0
+    (-2..2).each do |i|
+      (-2..2).each do |j|
+        next if i.abs == j.abs || i.zero? || j.zero?
+
         arr << [position[0] + i, position[1] + j] if @@free.include?([position[0] + i, position[1] + j])
       end
     end
@@ -39,9 +42,10 @@ class Tree
   end
 
   def build_tree(node)
-    return if @@free.length == 0
+    return if @@free.empty?
+
     possible_moves = calculate_moves(node.root)
-    
+
     possible_moves.each do |element|
       child = Node.new(element)
       child.parent = node
@@ -49,9 +53,9 @@ class Tree
       @@free.delete(child.root)
     end
   end
-  
+
   def level_order(node, queue = [node], order = [])
-    while queue.length != 0
+    until queue.empty?
       yield queue[0] if block_given?
       order.push(queue[0].root)
       queue[0].children.each do |child|
@@ -80,15 +84,10 @@ def knight_moves(start, target)
   moves = Tree.new(knight)
   moves.build_tree(knight)
   moves.level_order(knight) do |node|
-    if node.root == target
-      return moves.print_result(node)
-    else 
-      moves.build_tree(node)
-    end 
+    return moves.print_result(node) if node.root == target
+
+    moves.build_tree(node)
   end
 end
 
 knight_moves([8, 8], [1, 1])
-
-
-
