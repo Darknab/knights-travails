@@ -1,79 +1,94 @@
-
+require 'pry-byebug'
 
 class Node
-  attr_accessor :root, :move_1, :move_2, :move_3, :move_4,
-  :move_5, :move_6, :move_7, :move_8, :parent
+  attr_accessor :root, :children, :parent
 
   def initialize(root)
     @root = root
-    @move_1 = nil
-    @move_2 = nil
-    @move_3 = nil
-    @move_4 = nil
-    @move_5 = nil
-    @move_6 = nil
-    @move_7 = nil
-    @move_8 = nil
+    @children = Array.new(8)
     @parent = nil
   end
 
 end
 
 class Tree
-
+  attr_accessor :node
   board = []
-  for i in 0..7 do
-    for j in 0..7 do
+  for i in 1..8 do
+    for j in 1..8 do
       board << [i, j]
     end 
   end
 
   @@free = board
 
-  def initialize(node, free)
+  def initialize(node)
     @node = node
-    @free = free
   end
 
   #position is node.root
-  def calculate_moves(position, free)
+  def calculate_moves(position)
     arr = []
     for i in -2..2 do
       for j in -2..2 do
         next if i.abs == j.abs || i == 0 || j == 0
-        arr << [position[0] + i, position[1] + j] if free.includes?([position[0] + i, position[1] + j])
+        arr << [position[0] + i, position[1] + j] if @@free.include?([position[0] + i, position[1] + j])
       end
     end
     arr
   end
 
-  def build_tree(node, free)
-    possible_moves = calculate_moves(node.root, free)
-    children = [node.move_1, node.move_2, node.move_3, node.move_4, node.move_5, node.move_6, node.move_7, node.move_8]
-
-    children.each do |child, index|
-      if possible_moves(index)
-        child = Node.new(possible_moves(index)) 
-        child.parent = node.root
-        @@free.delete(child)
-      end
+  def build_tree(node)
+    return if @@free.length == 0
+    possible_moves = calculate_moves(node.root)
+    
+    possible_moves.each do |element|
+      child = Node.new(element)
+      child.parent = node
+      node.children << child
+      @@free.delete(child.root)
     end
   end
-   
+  
+  def level_order(node, queue = [node], order = [])
+    while queue.length != 0
+      yield queue[0] if block_given?
+      order.push(queue[0].root)
+      queue[0].children.each do |child|
+        queue.push(child) if child
+      end
+      queue.delete_at(0)
+    end
+    order
+  end
+
+  def find_path(node, path = [])
+    path.unshift(node.root)
+    find_path(node.parent, path) if node.parent
+    path
+  end
+
+  def print_result(node)
+    path = find_path(node)
+    puts "You made it in #{path.length - 1} moves! Here's your path:"
+    p path
+  end
 end
 
+def knight_moves(start, target)
+  knight = Node.new(start)
+  moves = Tree.new(knight)
+  moves.build_tree(knight)
+  moves.level_order(knight) do |node|
+    if node.root == target
+      return moves.print_result(node)
+    else 
+      moves.build_tree(node)
+    end 
+  end
+end
 
-# Create board
-# A knight position is a node, its position on the board represent its value
-# The current position is the root of the tree
-# The possible moves are children of the node
-  # exclude positions that are outside the board
-  # exclude position that aldready exist in the tree
-# If the children don't include the target:
-  # Create a tree of the possible moves from each child
-  # Append the newly created trees to the first tree
-  # The new trees mus ll be on the same level
-  # if the target is spotted: print the path from the begining
-  # Else...repeat
+knight_moves([8, 8], [1, 1])
+
 
 
